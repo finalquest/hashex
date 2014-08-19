@@ -36,20 +36,20 @@ defmodule HashexTest do
   	assert HashUtils.modify( %Some{b: %{c: [a: %{b: [c: [1,2,3]]}]}}, [:b, :c, :a, :b, :c], fn(res) -> Enum.map(res, &(&1*&1)) end ) == %Some{b: %{c: [a: %{b: [c: [1,4,9]]}]}}
   end
 
-  test "modify_each_struct" do
-    assert HashUtils.modify_each( %Some{}, [], fn(_) -> :some_else end ) == %Some{a: :some_else, b: :some_else}
+  test "modify_all_struct" do
+    assert HashUtils.modify_all( %Some{}, [], fn(_) -> :some_else end ) == %Some{a: :some_else, b: :some_else}
   end
 
-  test "modify_each_map" do
-    assert HashUtils.modify_each( %{a: 1, b: %{c: 2, d: 3}}, [:b], fn(el) -> el*el end ) == %{a: 1, b: %{c: 4, d: 9}}
+  test "modify_all_map" do
+    assert HashUtils.modify_all( %{a: 1, b: %{c: 2, d: 3}}, [:b], fn(el) -> el*el end ) == %{a: 1, b: %{c: 4, d: 9}}
   end
 
-  test "modify_each_nested" do
-    assert HashUtils.modify_each( %Some{a: [a: %{a: [a: 1, b: 2, c: 3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [a: 1, b: 4, c: 9]}]}
+  test "modify_all_nested" do
+    assert HashUtils.modify_all( %Some{a: [a: %{a: [a: 1, b: 2, c: 3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [a: 1, b: 4, c: 9]}]}
   end
 
-  test "modify_each_lst" do
-    assert HashUtils.modify_each( %Some{a: [a: %{a: [1,2,3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [1,4,9]}]}
+  test "modify_all_lst" do
+    assert HashUtils.modify_all( %Some{a: [a: %{a: [1,2,3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [1,4,9]}]}
   end
 
   test "delete_from_nested_map" do
