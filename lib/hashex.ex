@@ -22,6 +22,7 @@ defprotocol HashUtils do
   def get( hash, lst )
   def set( hash, lst, val )
   def modify( hash, lst, func )
+  def modify_each( hash, lst, func )
 end
 
 defimpl HashUtils, for: Map do
@@ -44,6 +45,20 @@ defimpl HashUtils, for: Map do
     HashUtils.modify( hash, lst, fn(_) -> new_val end )
   end
 
+  # modify each field of hash, except :__struct__
+  def modify_each( hash, [], func ) do
+    Enum.reduce( Map.to_list(hash), hash, fn({k, v}, res) ->
+      case k do
+        :__struct__ -> Map.update!( res, k, fn(_) -> v end )
+        some_else -> Map.update!( res, k, func )
+      end
+    end )
+  end
+  def modify_each( hash, [key|rest], func ) do
+    Map.update!( hash, key, fn(_) -> HashUtils.modify_each(Map.get( hash, key ) , rest, func) end )
+  end
+  
+
 end
 
 defimpl HashUtils, for: List do
@@ -65,5 +80,42 @@ defimpl HashUtils, for: List do
   def set( hash, lst, new_val ) do
     HashUtils.modify( hash, lst, fn(_) -> new_val end )
   end
+
+  # modify each field of hash if hash is_keylist, or just do Enum.map for this element
+  def modify_each( lst, [], func ) do
+    case is_keylist( lst ) do
+      true -> Enum.reduce( lst, lst, fn({k, _}, res) ->
+                Dict.update!( res, k, func )
+              end )
+      false -> Enum.map( lst, func )
+    end
+  end
+  def modify_each( hash, [key | rest], func ) do
+    Dict.update!( hash, key, fn(_) -> HashUtils.modify_each(Dict.get( hash, key ) , rest, func) end )
+  end
+
+  # priv funcs for modify_each
+  defp is_keylist lst do
+    is_lst_of_tuples(lst)
+      |> is_tuples_size2(lst)
+        |> is_fist_elem_atom(lst)
+  end
+
+  defp is_lst_of_tuples lst do
+    Enum.all?( lst, fn(el) -> is_tuple(el) end )
+  end
+  defp is_tuples_size2 false, _ do
+    false
+  end
+  defp is_tuples_size2 true, lst do
+    Enum.all?( lst, fn(el) -> :erlang.size(el) == 2 end )
+  end
+  defp is_fist_elem_atom false, _ do
+    false
+  end
+  defp is_fist_elem_atom true, lst do
+    Enum.all?( lst, fn({k, _}) -> is_atom(k) end )
+  end
+
 
 end
