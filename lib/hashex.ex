@@ -23,6 +23,7 @@ defprotocol HashUtils do
   def set( hash, lst, val )
   def modify( hash, lst, func )
   def modify_all( hash, lst, func )
+  def modify_all( hash, func )
   def delete( hash, lst )
 end
 
@@ -34,6 +35,9 @@ defimpl HashUtils, for: Map do
   def get( hash, [key | rest] ) do
     HashUtils.get( Map.get( hash, key ) , rest )
   end
+  def get( hash, key )  do # special case for not-nested hashmap
+    HashUtils.get( hash, [key] )
+  end
 
   def modify( hash, [key | []], func ) do
     Map.update!( hash, key, func )
@@ -41,12 +45,15 @@ defimpl HashUtils, for: Map do
   def modify( hash, [key | rest], func ) do
     Map.update!( hash, key, fn(_) -> HashUtils.modify(Map.get( hash, key ) , rest, func) end )
   end
+  def modify( hash, key, func ) do # special case for not-nested hashmap
+    HashUtils.modify( hash, [key], func )
+  end
 
   def set( hash, lst, new_val ) do
     HashUtils.modify( hash, lst, fn(_) -> new_val end )
   end
 
-  # modify each field of hash, except :__struct__
+  # modify all fields of hash, except :__struct__
   def modify_all( hash, [], func ) do
     Enum.reduce( Map.to_list(hash), hash, fn({k, v}, res) ->
       case k do
@@ -58,6 +65,9 @@ defimpl HashUtils, for: Map do
   def modify_all( hash, [key|rest], func ) do
     Map.update!( hash, key, fn(_) -> HashUtils.modify_all(Map.get( hash, key ) , rest, func) end )
   end
+  def modify_all( hash, func ) do # special case for not-nested hashmap
+    HashUtils.modify_all( hash, [], func )
+  end
 
   def delete( hash, [key|[]] ) do
     case Map.has_key?( hash, :__struct__ ) do
@@ -68,6 +78,10 @@ defimpl HashUtils, for: Map do
   def delete( hash, [key|rest] ) do
     Map.update!( hash, key, fn(_) -> HashUtils.delete(Map.get( hash, key ) , rest) end )
   end
+  def delete( hash, key ) do # special case for not-nested hashmap
+    HashUtils.delete( hash, [key] )
+  end
+  
 
 end
 
@@ -79,6 +93,9 @@ defimpl HashUtils, for: List do
   def get( hash, [key | rest] ) do
     HashUtils.get( hash[key], rest )
   end
+  def get( hash, key )  do # special case for not-nested hashmap
+    HashUtils.get( hash, [key] )
+  end
 
   def modify( hash, [key | []], func ) do
     Dict.update!( hash, key, func )
@@ -86,12 +103,15 @@ defimpl HashUtils, for: List do
   def modify( hash, [key | rest], func ) do
     Dict.update!( hash, key, fn(_) -> HashUtils.modify(Dict.get( hash, key ) , rest, func) end )
   end
+  def modify( hash, key, func ) do # special case for not-nested hashmap
+    HashUtils.modify( hash, [key], func )
+  end
 
   def set( hash, lst, new_val ) do
     HashUtils.modify( hash, lst, fn(_) -> new_val end )
   end
 
-  # modify each field of hash if hash is_keylist, or just do Enum.map for this element
+  # modify all fields of hash if hash is_keylist, or just do Enum.map for this list
   def modify_all( lst, [], func ) do
     case is_keylist( lst ) do
       true -> Enum.reduce( lst, lst, fn({k, _}, res) ->
@@ -103,12 +123,18 @@ defimpl HashUtils, for: List do
   def modify_all( hash, [key | rest], func ) do
     Dict.update!( hash, key, fn(_) -> HashUtils.modify_all(Dict.get( hash, key ) , rest, func) end )
   end
+  def modify_all( hash, func ) do # special case for not-nested hashmap
+    HashUtils.modify_all( hash, [], func )
+  end
 
   def delete( hash, [key|[]] ) do
     Dict.delete( hash, key )
   end
   def delete( hash, [key|rest] ) do
     Dict.update!( hash, key, fn(_) -> HashUtils.delete(Dict.get( hash, key ) , rest) end )
+  end
+  def delete( hash, key ) do # special case for not-nested hashmap
+    HashUtils.delete( hash, [key] )
   end
 
   # priv funcs for modify_all

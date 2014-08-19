@@ -60,4 +60,27 @@ defmodule HashexTest do
     assert HashUtils.delete( %{a: [b: [c: 1, d: 1, e: 1]]}, [:a, :b, :e] ) == %{a: [b: [c: 1, d: 1]]}
   end
 
+  test "simple_delete" do
+    assert (HashUtils.delete( %{a: 1, b: 2}, :b ) == %{a: 1})
+              and ( HashUtils.delete( [a: 1, b: 2], :b ) == [a: 1] )
+  end
+
+  test "simple_set" do
+    assert (HashUtils.set( %{a: 1, b: 2}, :b , 123) == %{a: 1, b: 123} ) 
+              and ( HashUtils.set( %Some{a: 1, b: %{c: [1,2,3]}}, :b, 1 ) == %Some{a: 1, b: 1} )
+                and ( HashUtils.set( [a: 1, b: 2], :b , 123) == [a: 1, b: 123] )
+  end
+
+  test "simple_modify" do
+    assert (HashUtils.modify( %{a: 1, b: 2}, :b , &(&1*&1)) == %{a: 1, b: 4} ) 
+              and ( HashUtils.modify( %Some{a: 1, b: %{c: [1,2,3]}}, :a , &(&1+&1) ) == %Some{a: 2, b: %{c: [1,2,3]}} )
+                and ( HashUtils.modify( [a: 1, b: 2], :b , &(&1*&1)) == [a: 1, b: 4] )
+  end
+
+  test "simple_modify_all" do
+    assert (HashUtils.modify_all( %{a: 1, b: 2}, &(&1+&1)) == %{a: 2, b: 4} ) 
+              and ( HashUtils.modify_all( %Some{a: 1, b: 2}, &(&1+&1) ) == %Some{a: 2, b: 4} )
+                and ( HashUtils.modify_all( [a: 1, b: 2], &(&1*&1)) == [a: 1, b: 4] )
+  end
+
 end
