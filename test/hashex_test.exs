@@ -52,4 +52,12 @@ defmodule HashexTest do
     assert HashUtils.modify_each( %Some{a: [a: %{a: [1,2,3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [1,4,9]}]}
   end
 
+  test "delete_from_nested_map" do
+    assert HashUtils.delete( %{a: [b: %{c: 1, d: 1, e: 1}]}, [:a, :b, :e] ) == %{a: [b: %{c: 1, d: 1}]}
+  end
+
+  test "delete_from_nested_keylist" do
+    assert HashUtils.delete( %{a: [b: [c: 1, d: 1, e: 1]]}, [:a, :b, :e] ) == %{a: [b: [c: 1, d: 1]]}
+  end
+
 end

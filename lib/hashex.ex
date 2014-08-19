@@ -23,6 +23,7 @@ defprotocol HashUtils do
   def set( hash, lst, val )
   def modify( hash, lst, func )
   def modify_each( hash, lst, func )
+  def delete( hash, lst )
 end
 
 defimpl HashUtils, for: Map do
@@ -57,7 +58,16 @@ defimpl HashUtils, for: Map do
   def modify_each( hash, [key|rest], func ) do
     Map.update!( hash, key, fn(_) -> HashUtils.modify_each(Map.get( hash, key ) , rest, func) end )
   end
-  
+
+  def delete( hash, [key|[]] ) do
+    case Map.has_key?( hash, :__struct__ ) do
+      true -> raise "Can't delete any field of struct #{inspect hash}"
+      false -> Map.delete( hash, key )
+    end
+  end
+  def delete( hash, [key|rest] ) do
+    Map.update!( hash, key, fn(_) -> HashUtils.delete(Map.get( hash, key ) , rest) end )
+  end
 
 end
 
@@ -92,6 +102,13 @@ defimpl HashUtils, for: List do
   end
   def modify_each( hash, [key | rest], func ) do
     Dict.update!( hash, key, fn(_) -> HashUtils.modify_each(Dict.get( hash, key ) , rest, func) end )
+  end
+
+  def delete( hash, [key|[]] ) do
+    Dict.delete( hash, key )
+  end
+  def delete( hash, [key|rest] ) do
+    Dict.update!( hash, key, fn(_) -> HashUtils.delete(Dict.get( hash, key ) , rest) end )
   end
 
   # priv funcs for modify_each
