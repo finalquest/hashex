@@ -83,4 +83,12 @@ defmodule HashexTest do
                 and ( HashUtils.modify_all( [a: 1, b: 2], &(&1*&1)) == [a: 1, b: 4] )
   end
 
+  test "add_map" do
+    assert (HashUtils.add( %Some{a: %{1 => %{"some" => 123}}}, [:a, 1, :some_else], 321 ) ==
+              %Some{a: %{1 => %{"some" => 123, :some_else => 321}}})
+  end
+
+  test "add_map_simple" do
+    assert HashUtils.add( %{a: 1}, :b, 2 ) == %{a: 1, b: 2}
+  end
 end

@@ -21,6 +21,7 @@ end
 defprotocol HashUtils do
   def get( hash, lst )
   def set( hash, lst, val )
+  def add( hash, lst, val )
   def modify( hash, lst, func )
   def modify_all( hash, lst, func )
   def modify_all( hash, func )
@@ -81,6 +82,23 @@ defimpl HashUtils, for: Map do
   def delete( hash, key ) do # special case for not-nested hashmap
     HashUtils.delete( hash, [key] )
   end
+
+  # it's like set/3 function, but can create new fields if it is need
+  def add( hash, [new_key|[]], new_val ) do
+    case Map.has_key?( hash, :__struct__ ) do
+      true -> raise "Can't create any new field in struct #{inspect hash}"
+      false -> Map.put( hash, new_key, new_val )
+    end
+  end
+  def add( hash, [key | rest], new_val ) do
+    Map.update!( hash, key, fn(_) -> HashUtils.add(Map.get( hash, key ) , rest, new_val) end )
+  end
+  def add( hash, new_key, new_val ) do # special case for not-nested hashmap
+    HashUtils.add( hash, [new_key], new_val )
+  end
+  
+  
+  
   
 
 end
@@ -135,6 +153,17 @@ defimpl HashUtils, for: List do
   end
   def delete( hash, key ) do # special case for not-nested hashmap
     HashUtils.delete( hash, [key] )
+  end
+
+  # it's like set/3 function, but can create new fields if it is need
+  def add( hash, [new_key|[]], new_val ) do
+      Dict.put( hash, new_key, new_val )
+  end
+  def add( hash, [key | rest], new_val ) do
+    Dict.update!( hash, key, fn(_) -> HashUtils.add(Dict.get( hash, key ) , rest, new_val) end )
+  end
+  def add( hash, new_key, new_val ) do # special case for not-nested hashmap
+    HashUtils.add( hash, [new_key], new_val )
   end
 
   # priv funcs for modify_all
