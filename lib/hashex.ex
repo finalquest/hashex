@@ -21,6 +21,7 @@ end
 defprotocol HashUtils do
   def get( hash, lst )
   def set( hash, lst, val )
+  def set( hash, keylist )
   def add( hash, lst, val )
   def modify( hash, lst, func )
   def modify_all( hash, lst, func )
@@ -53,6 +54,10 @@ defimpl HashUtils, for: Map do
   def set( hash, lst, new_val ) do
     HashUtils.modify( hash, lst, fn(_) -> new_val end )
   end
+  def set( hash, keylist ) do # support keylists for not-nested hash
+    Enum.reduce( keylist, hash, fn({k,v}, reshash) -> HashUtils.set( reshash, k, v ) end )
+  end
+  
 
   # modify all fields of hash, except :__struct__
   def modify_all( hash, [], func ) do
@@ -127,6 +132,9 @@ defimpl HashUtils, for: List do
 
   def set( hash, lst, new_val ) do
     HashUtils.modify( hash, lst, fn(_) -> new_val end )
+  end
+  def set( hash, keylist ) do # support keylists for not-nested hash
+    Enum.reduce( keylist, hash, fn({k,v}, reshash) -> HashUtils.set( reshash, k, v ) end )
   end
 
   # modify all fields of hash if hash is_keylist, or just do Enum.map for this list

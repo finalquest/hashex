@@ -91,4 +91,13 @@ defmodule HashexTest do
   test "add_map_simple" do
     assert HashUtils.add( %{a: 1}, :b, 2 ) == %{a: 1, b: 2}
   end
+
+  test "support of keylists" do
+    assert HashUtils.set( %Some{a: 1, b: [1,2,3]}, [b: 2, a: 2] ) == %Some{a: 2, b: 2}
+  end
+
+  test "support of keylists 2" do
+    assert HashUtils.set( [a: 1, b: [1,2,3]], [b: 2, a: 2] ) == [a: 2, b: 2]
+  end
+
 end
