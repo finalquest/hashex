@@ -34,8 +34,10 @@ defprotocol HashUtils do
   def values( hash, lst )
   def values( hash )
 
-  def select_major( hash1, hash2, lst )  # like "--" operator for lists
-  def select_minor( hash1, hash2 )   
+  def select_changes( new_hash, old_hash ) # like "--" operator 
+  def select_changes( new_hash, old_hash, lst_or_condition )  # like "--" operator 
+  def select_changes( new_hash, old_hash, lst, condition )  # condition(el1, el2) instead el1 == el2 inside function
+
 end
 
 defimpl HashUtils, for: Map do
@@ -73,7 +75,7 @@ defimpl HashUtils, for: Map do
     Enum.reduce( Map.to_list(hash), hash, fn({k, v}, res) ->
       case k do
         :__struct__ -> Map.update!( res, k, fn(_) -> v end )
-        some_else -> Map.update!( res, k, func )
+        _ -> Map.update!( res, k, func )
       end
     end )
   end
@@ -132,13 +134,39 @@ defimpl HashUtils, for: Map do
       fn( key ) -> HashUtils.get(hash, key ) end )
   end
   
-
-  def select_major( new_hash, old_hash, [] ) do
-    
+  # result - map_of changed elements
+  def select_changes( new_hash, old_hash ) do
+    HashUtils.select_changes( new_hash, old_hash, [] )
+  end
+  def select_changes( new_hash, old_hash, [] ) do
+    Enum.reduce( HashUtils.keys(new_hash), %{}, fn(key, resmap) ->
+      new_val = HashUtils.get(new_hash, key)
+      case new_val == HashUtils.get(old_hash, key) do
+        true -> resmap
+        false -> Map.put( resmap, key, new_val )
+      end 
+    end )
+  end
+  def select_changes( new_hash, old_hash, [key | rest] ) do
+    HashUtils.select_changes( HashUtils.get(new_hash, key), HashUtils.get(old_hash, key), rest )
   end
   
-  
-  
+  # select func with special condition (func/2)
+  def select_changes( new_hash, old_hash, condition ) do
+    HashUtils.select_changes( new_hash, old_hash, [], condition )
+  end
+  def select_changes( new_hash, old_hash, [] , condition) do
+    Enum.reduce( HashUtils.keys(new_hash), %{}, fn(key, resmap) ->
+      new_val = HashUtils.get(new_hash, key)
+      case condition.(new_val, HashUtils.get(old_hash, key)) do
+        true -> resmap
+        false -> Map.put( resmap, key, new_val )
+      end
+    end )
+  end
+  def select_changes( new_hash, old_hash, [key | rest], condition ) do
+    HashUtils.select_changes( HashUtils.get(new_hash, key), HashUtils.get(old_hash, key), rest, condition )
+  end
 
 end
 
@@ -228,6 +256,40 @@ defimpl HashUtils, for: List do
   def values( hash ) do
     Enum.map( HashUtils.keys( hash ), 
       fn( key ) -> HashUtils.get(hash, key ) end )
+  end
+
+
+  # result - map_of changed elements
+  def select_changes( new_hash, old_hash ) do
+    HashUtils.select_changes( new_hash, old_hash, [] )
+  end
+  def select_changes( new_hash, old_hash, [] ) do
+    Enum.reduce( HashUtils.keys(new_hash), %{}, fn(key, resmap) ->
+      new_val = HashUtils.get(new_hash, key)
+      case new_val == HashUtils.get(old_hash, key) do
+        true -> resmap
+        false -> Map.put( resmap, key, new_val )
+      end
+    end )
+  end
+  def select_changes( new_hash, old_hash, [key | rest] ) do
+    HashUtils.select_changes( HashUtils.get(new_hash, key), HashUtils.get(old_hash, key), rest )
+  end
+  def select_changes( new_hash, old_hash, condition ) do
+    HashUtils.select_changes( new_hash, old_hash, [], condition )
+  end
+  # select func with special condition (func/2)
+  def select_changes( new_hash, old_hash, [] , condition) do
+    Enum.reduce( HashUtils.keys(new_hash), %{}, fn(key, resmap) ->
+      new_val = HashUtils.get(new_hash, key)
+      case condition.(new_val, HashUtils.get(old_hash, key)) do
+        false -> resmap
+        true -> Map.put( resmap, key, new_val )
+      end
+    end )
+  end
+  def select_changes( new_hash, old_hash, [key | rest], condition ) do
+    HashUtils.select_changes( HashUtils.get(new_hash, key), HashUtils.get(old_hash, key), rest, condition )
   end
 
 

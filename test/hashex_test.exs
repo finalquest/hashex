@@ -100,4 +100,44 @@ defmodule HashexTest do
     assert HashUtils.set( [a: 1, b: [1,2,3]], [b: 2, a: 2] ) == [a: 2, b: 2]
   end
 
+  test "keys 1" do
+    assert HashUtils.keys( [a: 1, b: [1,2,3]] ) == [:a, :b]
+  end
+
+  test "keys 2" do
+    assert HashUtils.keys( %Some{a: %{1 => %{"some" => 123}}}, [:a, 1] ) == ["some"]
+  end
+
+  test "keys 3" do
+    assert HashUtils.keys( %Some{a: %{1 => %{"some" => [a: 1, b: 2, c: %{1 => [a: 1, b: 2]}]}}}, [:a, 1, "some", :c, 1] ) == [:a, :b]
+  end
+
+  test "values 1" do
+    assert HashUtils.values( [a: 1, b: [1,2,3]] ) == [1, [1,2,3]]
+  end
+
+  test "values 2" do
+    assert HashUtils.values( %Some{a: %{1 => %{"some" => 123}}}, [:a, 1] ) == [123]
+  end
+
+  test "values 3" do
+    assert HashUtils.values( %Some{a: %{1 => %{"some" => [a: 1, b: 2, c: %{1 => [a: 1, b: 2]}]}}}, [:a, 1, "some", :c, 1] ) == [1, 2]
+  end
+
+  test "select_changes 1" do
+    assert HashUtils.select_changes( %Some{a: %{ 1 => "some", 2 => "qweqwe"}}, %Some{a: %{ 1 => "some_else", 3 => "qweqweqwe"}}, [:a] ) == %{ 1 => "some", 2 => "qweqwe"}
+  end
+
+  test "select_changes 2" do
+    assert HashUtils.select_changes( %Some{a: %{ 1 => "some", 2 => "qweqwe"}}, %Some{a: %{ 1 => "some_else", 3 => "qweqweqwe"}} ) == %{a: %{ 1 => "some", 2 => "qweqwe"}}
+  end
+
+  test "select_changes 3" do
+    assert HashUtils.select_changes( [a: 1, b: 4, c: 8], [a: 1, b: 2, c: 3], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
+  end
+
+  test "select_changes 4" do
+    assert HashUtils.select_changes( %Some{a: [a: 1, b: 4, c: 8]}, %Some{a: [a: 1, b: 2, c: 3]}, [:a], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
+  end
+
 end
