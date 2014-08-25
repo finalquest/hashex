@@ -28,14 +28,15 @@ defprotocol HashUtils do
   def modify_all( hash, lst, func )
   def modify_all( hash, func )
   def delete( hash, lst )
+  def delete( hash, path, lst_of_keys )
 
   def keys( hash, lst )
   def keys( hash )
   def values( hash, lst )
   def values( hash )
 
-  def select_changes( new_hash, old_hash ) # like "--" operator 
-  def select_changes( new_hash, old_hash, lst_or_condition )  # like "--" operator 
+  def select_changes( new_hash, old_hash ) # like "--" operator , but consider new keys AND any changing in values
+  def select_changes( new_hash, old_hash, lst_or_condition )  # like "--" operator , but consider new keys AND any changing in values
   def select_changes( new_hash, old_hash, lst, condition )  # condition(el1, el2) instead el1 == el2 inside function
 
 end
@@ -97,6 +98,18 @@ defimpl HashUtils, for: Map do
   end
   def delete( hash, key ) do # special case for not-nested hashmap
     HashUtils.delete( hash, [key] )
+  end
+
+  def delete( hash, [], lst_to_delete ) do
+    Enum.reduce(lst_to_delete, hash, fn(el, res) -> 
+      HashUtils.delete( res, el )
+    end )
+  end
+  def delete( hash, [key|rest], lst_to_delete ) do
+    Map.update!( hash, key, fn(_) -> HashUtils.delete(Map.get( hash, key ) , rest, lst_to_delete) end )
+  end
+  def delete( hash, key, lst_to_delete ) do
+    HashUtils.delete( hash, [key], lst_to_delete )
   end
 
   # it's like set/3 function, but can create new fields if it is need
@@ -224,6 +237,19 @@ defimpl HashUtils, for: List do
   def delete( hash, key ) do # special case for not-nested hashmap
     HashUtils.delete( hash, [key] )
   end
+
+  def delete( hash, [], lst_to_delete ) do
+    Enum.reduce(lst_to_delete, hash, fn(el, res) -> 
+      HashUtils.delete( res, el )
+    end )
+  end
+  def delete( hash, [key|rest], lst_to_delete ) do
+    Dict.update!( hash, key, fn(_) -> HashUtils.delete(Dict.get( hash, key ) , rest, lst_to_delete) end )
+  end
+  def delete( hash, key, lst_to_delete ) do
+    HashUtils.delete( hash, [key], lst_to_delete )
+  end
+  
 
   # it's like set/3 function, but can create new fields if it is need
   def add( hash, [new_key|[]], new_val ) do
