@@ -19,6 +19,7 @@ defmodule Hashex do
 end
 
 defprotocol HashUtils do
+
   def get( hash, lst )
   def set( hash, lst, val )
   def set( hash, keylist )
@@ -27,6 +28,14 @@ defprotocol HashUtils do
   def modify_all( hash, lst, func )
   def modify_all( hash, func )
   def delete( hash, lst )
+
+  def keys( hash, lst )
+  def keys( hash )
+  def values( hash, lst )
+  def values( hash )
+
+  def select_major( hash1, hash2, lst )  # like "--" operator for lists
+  def select_minor( hash1, hash2 )   
 end
 
 defimpl HashUtils, for: Map do
@@ -102,6 +111,27 @@ defimpl HashUtils, for: Map do
     HashUtils.add( hash, [new_key], new_val )
   end
   
+  # get all keys except :__struct__
+  def keys( hash, lst ) do
+    ( HashUtils.get(hash, lst) |> Map.keys ) -- [:__struct__]
+  end
+  def keys( hash ) do
+    Map.keys( hash ) -- [:__struct__]
+  end
+  # get all values except :__struct__
+  def values( hash, lst ) do
+    Enum.map( HashUtils.keys( hash, lst ), 
+      fn( key ) -> HashUtils.get(hash, lst++[key] ) end )
+  end
+  def values( hash ) do
+    Enum.map( HashUtils.keys( hash ), 
+      fn( key ) -> HashUtils.get(hash, key ) end )
+  end
+  
+
+  def select_major( new_hash, old_hash, [] ) do
+    
+  end
   
   
   
@@ -173,6 +203,25 @@ defimpl HashUtils, for: List do
   def add( hash, new_key, new_val ) do # special case for not-nested hashmap
     HashUtils.add( hash, [new_key], new_val )
   end
+
+
+  # get all keys except :__struct__
+  def keys( hash, lst ) do
+    ( HashUtils.get(hash, lst) |> Dict.keys )
+  end
+  def keys( hash ) do
+    Dict.keys( hash )
+  end
+  # get all values except :__struct__
+  def values( hash, lst ) do
+    Enum.map( HashUtils.keys( hash, lst ), 
+      fn( key ) -> HashUtils.get(hash, lst++[key] ) end )
+  end
+  def values( hash ) do
+    Enum.map( HashUtils.keys( hash ), 
+      fn( key ) -> HashUtils.get(hash, key ) end )
+  end
+
 
   # priv funcs for modify_all
   defp is_keylist lst do
