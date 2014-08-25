@@ -112,11 +112,15 @@ defimpl HashUtils, for: Map do
   end
   
   # get all keys except :__struct__
-  def keys( hash, lst ) do
-    ( HashUtils.get(hash, lst) |> Map.keys ) -- [:__struct__]
+  def keys( hash, [] ) do
+    Map.keys(hash) -- [:__struct__]
+  end
+  def keys( hash, [key | rest] ) do
+    Map.get(hash, key)
+      |> HashUtils.keys( rest )
   end
   def keys( hash ) do
-    Map.keys( hash ) -- [:__struct__]
+    HashUtils.keys( hash, [] )
   end
   # get all values except :__struct__
   def values( hash, lst ) do
@@ -206,11 +210,15 @@ defimpl HashUtils, for: List do
 
 
   # get all keys except :__struct__
-  def keys( hash, lst ) do
-    ( HashUtils.get(hash, lst) |> Dict.keys )
+  def keys( hash, [] ) do
+    Dict.keys(hash)
+  end
+  def keys( hash, [key | rest] ) do
+    Dict.get(hash, key)
+      |> HashUtils.keys( rest )
   end
   def keys( hash ) do
-    Dict.keys( hash )
+    HashUtils.keys( hash, [] )
   end
   # get all values except :__struct__
   def values( hash, lst ) do
