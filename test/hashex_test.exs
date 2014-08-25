@@ -140,4 +140,15 @@ defmodule HashexTest do
     assert HashUtils.select_changes( %Some{a: [a: 1, b: 4, c: 8]}, %Some{a: [a: 1, b: 2, c: 3]}, [:a], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
   end
 
+  test "delete 1" do
+    assert HashUtils.delete( %Some{a: [a: 1, b: 4, c: 8]}, :a, [:a,:b] ) == %Some{a: [c: 8]}
+  end
+  test "delete 2" do
+    assert HashUtils.delete( [a: %{a: 1, b: 4, c: 8}], :a, [:a,:b] ) == [a: %{c: 8}]
+  end
+
+  test "nil" do
+    assert HashUtils.get( %Some{a: %{1 => [2,3,4]}}, [:b, 2] ) == nil
+  end
+
 end
