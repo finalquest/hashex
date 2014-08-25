@@ -41,11 +41,15 @@ defprotocol HashUtils do
 
 end
 
-defimpl HashUtils, for: Map do
 
+defimpl HashUtils, for: Atom do
   def get( nil, _ ) do
     nil
   end
+end
+
+
+defimpl HashUtils, for: Map do
   def get( hash, [key | []] ) do
     Map.get( hash, key )
   end
@@ -188,9 +192,6 @@ end
 
 defimpl HashUtils, for: List do
 
-  def get( nil, _ ) do
-    nil
-  end
   def get( hash, [key | []] ) do
     hash[key]
   end

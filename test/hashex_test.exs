@@ -151,4 +151,8 @@ defmodule HashexTest do
     assert HashUtils.get( %Some{a: %{1 => [2,3,4]}}, [:b, 2] ) == nil
   end
 
+  test "nil2" do
+    assert HashUtils.get( %{}, [:b, 2] ) == nil
+  end
+
 end
