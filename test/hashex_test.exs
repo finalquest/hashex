@@ -124,20 +124,20 @@ defmodule HashexTest do
     assert HashUtils.values( %Some{a: %{1 => %{"some" => [a: 1, b: 2, c: %{1 => [a: 1, b: 2]}]}}}, [:a, 1, "some", :c, 1] ) == [1, 2]
   end
 
-  test "select_changes 1" do
-    assert HashUtils.select_changes( %Some{a: %{ 1 => "some", 2 => "qweqwe"}}, %Some{a: %{ 1 => "some_else", 3 => "qweqweqwe"}}, [:a] ) == %{ 1 => "some", 2 => "qweqwe"}
+  test "select_changes_kv 1" do
+    assert HashUtils.select_changes_kv( %Some{a: %{ 1 => "some", 2 => "qweqwe"}}, %Some{a: %{ 1 => "some_else", 3 => "qweqweqwe"}}, [:a] ) == %{ 1 => "some", 2 => "qweqwe"}
   end
 
-  test "select_changes 2" do
-    assert HashUtils.select_changes( %Some{a: %{ 1 => "some", 2 => "qweqwe"}}, %Some{a: %{ 1 => "some_else", 3 => "qweqweqwe"}} ) == %{a: %{ 1 => "some", 2 => "qweqwe"}}
+  test "select_changes_kv 2" do
+    assert HashUtils.select_changes_kv( %Some{a: %{ 1 => "some", 2 => "qweqwe"}}, %Some{a: %{ 1 => "some_else", 3 => "qweqweqwe"}} ) == %{a: %{ 1 => "some", 2 => "qweqwe"}}
   end
 
-  test "select_changes 3" do
-    assert HashUtils.select_changes( [a: 1, b: 4, c: 8], [a: 1, b: 2, c: 3], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
+  test "select_changes_kv 3" do
+    assert HashUtils.select_changes_kv( [a: 1, b: 4, c: 8], [a: 1, b: 2, c: 3], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
   end
 
-  test "select_changes 4" do
-    assert HashUtils.select_changes( %Some{a: [a: 1, b: 4, c: 8]}, %Some{a: [a: 1, b: 2, c: 3]}, [:a], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
+  test "select_changes_kv 4" do
+    assert HashUtils.select_changes_kv( %Some{a: [a: 1, b: 4, c: 8]}, %Some{a: [a: 1, b: 2, c: 3]}, [:a], fn(new, old) -> new == old*old end ) == %{a: 1, b: 4}
   end
 
   test "delete 1" do
@@ -153,6 +153,14 @@ defmodule HashexTest do
 
   test "nil2" do
     assert HashUtils.get( %{}, [:b, 2] ) == nil
+  end
+
+  test "select_changes_k 1" do
+    assert HashUtils.select_changes_k( %Some{a: [a: 1, b: 5, c: 8]}, %Some{a: [b: 2, c: 3]}, [:a] ) == %{a: 1}
+  end
+
+  test "add to list" do
+    assert HashUtils.add_to_list(%Some{a: [a: 1, b: 5, c: [1,2,3]]}, [:a, :c], 0) == %Some{a: [a: 1, b: 5, c: [0,1,2,3]]}
   end
 
 end
