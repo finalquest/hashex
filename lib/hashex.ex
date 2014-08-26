@@ -36,12 +36,15 @@ defprotocol HashUtils do
   def values( hash, lst )
   def values( hash )
 
+  def select_changes_k( new_hash, old_hash ) # -- operator for hashmaps
+  def select_changes_k( new_hash, old_hash, lst ) # -- operator for hashmaps
+
   def select_changes_kv( new_hash, old_hash ) # like "--" operator , but consider new keys AND any changing in values
   def select_changes_kv( new_hash, old_hash, lst_or_condition )  # like "--" operator , but consider new keys AND any changing in values
   def select_changes_kv( new_hash, old_hash, lst, condition )  # condition(el1, el2) instead el1 == el2 inside function
 
-  def select_changes_k( new_hash, old_hash ) # -- operator for hashmaps
-  def select_changes_k( new_hash, old_hash, lst ) # -- operator for hashmaps
+  def plain_update( hash, incoming_data ) # incoming_data - also hashmap
+  def plain_update( hash, lst, incoming_data )
 
 end
 
@@ -125,7 +128,7 @@ defimpl HashUtils, for: Map do
 
   # it's like set/3 function, but can create new fields if it is need
   def add( hash, [new_key|[]], new_val ) do
-    case Map.has_key?( hash, :__struct__ ) do
+    case (Map.has_key?( hash, :__struct__ ) and not(Map.has_key?(hash, new_key)) ) do
       true -> raise "Can't create any new field in struct #{inspect hash}"
       false -> Map.put( hash, new_key, new_val )
     end
@@ -207,6 +210,19 @@ defimpl HashUtils, for: Map do
   def select_changes_k( new_hash, old_hash, [key | rest] ) do
     HashUtils.select_changes_k( HashUtils.get(new_hash, key), HashUtils.get(old_hash, key), rest )
   end
+
+  def plain_update( hash, incoming_data ) do
+    plain_update( hash, [], incoming_data )
+  end
+  def plain_update( hash, [], incoming_data ) do
+    Enum.reduce( HashUtils.keys(incoming_data), hash, fn(key, result) ->
+      HashUtils.add( result, key, HashUtils.get(incoming_data, key)) end )
+  end
+  def plain_update( hash, [key|rest], incoming_data ) do
+    Map.update!( hash, key, fn(_) -> HashUtils.plain_update(Map.get( hash, key ) , rest, incoming_data) end )
+  end
+  
+
 
 end
 
@@ -363,6 +379,18 @@ defimpl HashUtils, for: List do
   def select_changes_k( new_hash, old_hash, [key | rest] ) do
     HashUtils.select_changes_k( HashUtils.get(new_hash, key), HashUtils.get(old_hash, key), rest )
   end
+
+  def plain_update( hash, incoming_data ) do
+    plain_update( hash, [], incoming_data )
+  end
+  def plain_update( hash, [], incoming_data ) do
+    Enum.reduce( HashUtils.keys(incoming_data), hash, fn(key, result) ->
+      HashUtils.add( result, key, HashUtils.get(incoming_data, key)) end )
+  end
+  def plain_update( hash, [key|rest], incoming_data ) do
+    Dict.update!( hash, key, fn(_) -> HashUtils.plain_update(Dict.get( hash, key ) , rest, incoming_data) end )
+  end
+
 
   # priv funcs for modify_all
   defp is_keylist lst do

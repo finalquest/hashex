@@ -159,8 +159,23 @@ defmodule HashexTest do
     assert HashUtils.select_changes_k( %Some{a: [a: 1, b: 5, c: 8]}, %Some{a: [b: 2, c: 3]}, [:a] ) == %{a: 1}
   end
 
+  test "select_changes_k 2" do
+    assert HashUtils.select_changes_k( %Some{a: %{a: 1, b: 5, c: 8}}, %Some{a: %{b: 2, c: 3}}, [:a] ) == %{a: 1}
+  end
+
   test "add to list" do
     assert HashUtils.add_to_list(%Some{a: [a: 1, b: 5, c: [1,2,3]]}, [:a, :c], 0) == %Some{a: [a: 1, b: 5, c: [0,1,2,3]]}
   end
 
+  test "plain_update 0" do
+    assert HashUtils.plain_update( [a: 1, b: 2], %{a: 2, b: 3, c: 4} ) == [c: 4, b: 3, a: 2]
+  end
+
+  test "plain_update 1" do
+    assert HashUtils.plain_update( %Some{a: [a: 1, b: 5, c: [1,2,3]]}, [:a], %{a: 2, b: 4, c: 5, d: [1,2,3]} ) == %Some{a: [ d: [1,2,3], c: 5,b: 4,a: 2]}
+  end
+
+  test "plain_update 2" do
+    assert HashUtils.plain_update( %{a: %{b: %{a: 1, b: 2}}}, [:a, :b], %{a: 0, b: 1, c: 3} ) == %{a: %{b: %{a: 0, b: 1, c: 3}}}
+  end
 end
