@@ -46,6 +46,11 @@ defprotocol HashUtils do
   def plain_update( hash, incoming_data ) # incoming_data - also hashmap
   def plain_update( hash, lst, incoming_data )
 
+  def filter_k( hash, lst, func )
+  def filter_k( hash, func )
+  def filter_v( hash, lst, func )
+  def filter_v( hash, func )
+
 end
 
 
@@ -222,7 +227,30 @@ defimpl HashUtils, for: Map do
     Map.update!( hash, key, fn(_) -> HashUtils.plain_update(Map.get( hash, key ) , rest, incoming_data) end )
   end
   
+  def filter_k( hash, func ) do
+    HashUtils.filter_k( hash, [], func )
+  end
+  def filter_k( hash, [], func ) do
+    HashUtils.delete( hash, [],
+      Enum.filter( HashUtils.keys(hash), fn(key) -> not(func.(key)) end ) )
+  end
+  def filter_k( hash, lst, func ) do
+    HashUtils.modify( hash, lst, fn(target) -> HashUtils.filter_k(target, func) end )
+  end
 
+  def filter_v( hash, func ) do
+    HashUtils.filter_v( hash, [], func )
+  end
+  def filter_v( hash, [], func ) do
+    HashUtils.delete( hash, [],
+      Enum.filter( HashUtils.keys(hash), fn(key) -> not(func.( HashUtils.get(hash, key) )) end ) )
+  end
+  def filter_v( hash, lst, func ) do
+    HashUtils.modify( hash, lst, fn(target) -> HashUtils.filter_v(target, func) end )
+  end
+  
+  
+  
 
 end
 
@@ -389,6 +417,29 @@ defimpl HashUtils, for: List do
   end
   def plain_update( hash, [key|rest], incoming_data ) do
     Dict.update!( hash, key, fn(_) -> HashUtils.plain_update(Dict.get( hash, key ) , rest, incoming_data) end )
+  end
+
+
+  def filter_k( hash, func ) do
+    HashUtils.filter_k( hash, [], func )
+  end
+  def filter_k( hash, [], func ) do
+    HashUtils.delete( hash, [],
+      Enum.filter( HashUtils.keys(hash), fn(key) -> not(func.(key)) end ) )
+  end
+  def filter_k( hash, lst, func ) do
+    HashUtils.modify( hash, lst, fn(target) -> HashUtils.filter_k(target, func) end )
+  end
+  
+  def filter_v( hash, func ) do
+    HashUtils.filter_v( hash, [], func )
+  end
+  def filter_v( hash, [], func ) do
+    HashUtils.delete( hash, [],
+      Enum.filter( HashUtils.keys(hash), fn(key) -> not(func.( HashUtils.get(hash, key) )) end ) )
+  end
+  def filter_v( hash, lst, func ) do
+    HashUtils.modify( hash, lst, fn(target) -> HashUtils.filter_v(target, func) end )
   end
 
 

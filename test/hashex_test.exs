@@ -178,4 +178,29 @@ defmodule HashexTest do
   test "plain_update 2" do
     assert HashUtils.plain_update( %{a: %{b: %{a: 1, b: 2}}}, [:a, :b], %{a: 0, b: 1, c: 3} ) == %{a: %{b: %{a: 0, b: 1, c: 3}}}
   end
+
+  test "filter_k 1" do
+    assert HashUtils.filter_k( %{:a => 13, 2 => 2, "123123" => 3}, fn(key) -> is_integer(key) end ) == %{2 => 2}
+  end
+
+  test "filter_k 2" do
+    assert HashUtils.filter_k( %Some{a: [a: %{:a => 13, 2 => 2, "123123" => 3}]}, [:a, :a], fn(key) -> is_integer(key) end ) == %Some{a: [a: %{2 => 2}]}
+  end
+
+  test "filter_k 3" do
+    assert HashUtils.filter_k( %Some{a: [a: 123, b: 321]}, :a, fn(key) -> key == :a end ) == %Some{a: [a: 123]}
+  end
+
+  test "filter_v 1" do
+    assert HashUtils.filter_v( %{:a => :qwe, 2 => 2, "123123" => 3}, fn(val) -> is_integer(val) end ) == %{2 => 2, "123123" => 3}
+  end
+
+  test "filter_v 2" do
+    assert HashUtils.filter_v( %Some{a: [a: %{:a => :qwe, 2 => 2, "123123" => 3}]}, [:a, :a], fn(val) -> is_integer(val) end ) == %Some{a: [a:  %{2 => 2, "123123" => 3}]}
+  end
+
+  test "filter_v 3" do
+    assert HashUtils.filter_v( %Some{a: [a: 123, b: 321]}, :a, fn(val) -> val == 321 end ) == %Some{a: [b: 321]}
+  end
+
 end
