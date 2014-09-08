@@ -51,6 +51,8 @@ defprotocol HashUtils do
   def filter_v( hash, lst, func )
   def filter_v( hash, func )
 
+  def to_list( hash )
+
 end
 
 
@@ -249,8 +251,12 @@ defimpl HashUtils, for: Map do
     HashUtils.modify( hash, lst, fn(target) -> HashUtils.filter_v(target, func) end )
   end
   
-  
-  
+  def to_list( hash ) do
+    Enum.reduce( HashUtils.keys(hash), [], 
+      fn( key, res ) ->
+        [ {key, HashUtils.get(hash, key)} | res ]
+      end )
+  end
 
 end
 
@@ -441,6 +447,11 @@ defimpl HashUtils, for: List do
   def filter_v( hash, lst, func ) do
     HashUtils.modify( hash, lst, fn(target) -> HashUtils.filter_v(target, func) end )
   end
+
+  def to_list hash do
+    hash
+  end
+  
 
 
   # priv funcs for modify_all

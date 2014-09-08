@@ -203,4 +203,11 @@ defmodule HashexTest do
     assert HashUtils.filter_v( %Some{a: [a: 123, b: 321]}, :a, fn(val) -> val == 321 end ) == %Some{a: [b: 321]}
   end
 
+  test "to_list 1" do
+    assert HashUtils.to_list( %{a: 1} ) == [{:a, 1}]
+  end
+
+  test "to_list 2" do
+    assert HashUtils.to_list( [a: 1] ) == [{:a, 1}]
+  end
 end
