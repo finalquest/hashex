@@ -103,7 +103,7 @@ defimpl HashUtils, for: Map do
     Enum.map( fn({k,v}) ->
       case k do
         :__struct__ -> {k,v}
-        _ ->  {k, {:result, data} = ExTask.await(v)}
+        _ ->  {k, {:result, data} = ExTask.await(v, :infinity)}
               {k, data}
       end
     end ) |>
@@ -301,9 +301,9 @@ defimpl HashUtils, for: List do
   def modify_all( lst, [], func ) do
     case is_keylist( lst ) do
       true -> Enum.map( lst, fn({k,v}) -> {k, ExTask.run( fn() -> func.(v) end )} end ) 
-                |> Enum.map( fn({k,v}) -> {k, {:result, data} = ExTask.await(v)}; {k, data} end )
+                |> Enum.map( fn({k,v}) -> {k, {:result, data} = ExTask.await(v, :infinity)}; {k, data} end )
       false -> Enum.map( lst, fn(v) -> ExTask.run( fn() -> func.(v) end ) end ) 
-                |> Enum.map( fn(v) -> {:result, data} = ExTask.await(v); data end )
+                |> Enum.map( fn(v) -> {:result, data} = ExTask.await(v, :infinity); data end )
     end
   end
   def modify_all( hash, [key | rest], func ) do
