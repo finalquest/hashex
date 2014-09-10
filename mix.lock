@@ -1,0 +1,2 @@
+%{"exactor": {:git, "git://github.com/sasa1977/exactor.git", "027c8b3a99404a7195e7d64845d1a4db65ae6d6e", []},
+  "extask": {:git, "git://github.com/timCF/extask.git", "4164dddf3135c44623d77e9cba07324595353d6b", []}}

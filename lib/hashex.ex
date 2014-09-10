@@ -94,12 +94,20 @@ defimpl HashUtils, for: Map do
 
   # modify all fields of hash, except :__struct__
   def modify_all( hash, [], func ) do
-    Enum.reduce( Map.to_list(hash), hash, fn({k, v}, res) ->
+    Enum.map( Map.to_list(hash), fn({k,v}) ->
       case k do
-        :__struct__ -> Map.update!( res, k, fn(_) -> v end )
-        _ -> Map.update!( res, k, func )
+        :__struct__ -> {k,v}
+        _ -> {k, ExTask.run( fn() -> func.(v) end )}
       end
-    end )
+    end ) |>
+    Enum.map( fn({k,v}) ->
+      case k do
+        :__struct__ -> {k,v}
+        _ ->  {k, {:result, data} = ExTask.await(v)}
+              {k, data}
+      end
+    end ) |>
+    Enum.reduce( hash, fn({k, v}, res) -> Map.update!( res, k, fn(_) -> v end ) end )
   end
   def modify_all( hash, [key|rest], func ) do
     Map.update!( hash, key, fn(_) -> HashUtils.modify_all(Map.get( hash, key ) , rest, func) end )
@@ -292,10 +300,10 @@ defimpl HashUtils, for: List do
   # modify all fields of hash if hash is_keylist, or just do Enum.map for this list
   def modify_all( lst, [], func ) do
     case is_keylist( lst ) do
-      true -> Enum.reduce( lst, lst, fn({k, _}, res) ->
-                Dict.update!( res, k, func )
-              end )
-      false -> Enum.map( lst, func )
+      true -> Enum.map( lst, fn({k,v}) -> {k, ExTask.run( fn() -> func.(v) end )} end ) 
+                |> Enum.map( fn({k,v}) -> {k, {:result, data} = ExTask.await(v)}; {k, data} end )
+      false -> Enum.map( lst, fn(v) -> ExTask.run( fn() -> func.(v) end ) end ) 
+                |> Enum.map( fn(v) -> {:result, data} = ExTask.await(v); data end )
     end
   end
   def modify_all( hash, [key | rest], func ) do
