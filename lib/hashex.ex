@@ -24,6 +24,7 @@ defprotocol HashUtils do
   def set( hash, lst, val )
   def set( hash, keylist )
   def add( hash, lst, val )
+  def addf( hash, lst, val )
   def add_to_list( hash, lst, val )
   def modify( hash, lst, func )
   def modify_all( hash, lst, func )
@@ -52,6 +53,7 @@ defprotocol HashUtils do
   def filter_v( hash, func )
 
   def to_list( hash )
+  def is_hash?( hash )
 
 end
 
@@ -64,6 +66,11 @@ end
 
 
 defimpl HashUtils, for: Map do
+
+  def is_hash? _ do
+    true
+  end
+
   def get( hash, [key | []] ) do
     Map.get( hash, key )
   end
@@ -144,7 +151,7 @@ defimpl HashUtils, for: Map do
   # it's like set/3 function, but can create new fields if it is need
   def add( hash, [new_key|[]], new_val ) do
     case (Map.has_key?( hash, :__struct__ ) and not(Map.has_key?(hash, new_key)) ) do
-      true -> raise "Can't create any new field in struct #{inspect hash}"
+      true -> raise "HashUtils.add : Can't create any new field in struct #{inspect hash}, key #{inspect new_key}, val #{new_val}"
       false -> Map.put( hash, new_key, new_val )
     end
   end
@@ -266,9 +273,38 @@ defimpl HashUtils, for: Map do
       end )
   end
 
+
+  def addf(hash, path, val) when (is_list(path) and (path != [])) do
+    addf_proc(hash, path, val)
+  end
+  def addf(hash, path, val) do
+    raise "HashUtils.addf : wrong path #{inspect path} to hash #{inspect hash} and val #{inspect val}"
+  end
+  
+
+  defp addf_proc(hash, [first|[]], val) do
+    HashUtils.add(hash, first, val)
+  end
+  defp addf_proc(hash, path = [first|rest], val) do
+    case HashUtils.get(hash, first) do
+      nil -> HashUtils.add( hash, first, 
+              HashUtils.addf( %{}, rest, val ) )
+      some ->
+        case HashUtils.is_hash?(some) do
+          false -> raise "HashUtils.addf : can't apply addf to not hash #{inspect some}. Path #{inspect path}, hash #{inspect hash}, val #{inspect val}"
+          true -> HashUtils.add( hash, first, HashUtils.addf( some, rest, val ) )
+        end
+    end
+  end
+  
+
 end
 
 defimpl HashUtils, for: List do
+
+  def is_hash?(hash) do
+    is_keylist(hash)
+  end
 
   def get( hash, [key | []] ) do
     hash[key]
@@ -460,6 +496,29 @@ defimpl HashUtils, for: List do
     hash
   end
   
+
+  def addf(hash, path, val) when (is_list(path) and (path != [])) do
+    addf_proc(hash, path, val)
+  end
+  def addf(hash, path, val) do
+    raise "HashUtils.addf : wrong path #{inspect path} to hash #{inspect hash} and val #{inspect val}"
+  end
+  
+
+  defp addf_proc(hash, [first|[]], val) do
+    HashUtils.add(hash, first, val)
+  end
+  defp addf_proc(hash, path = [first|rest], val) do
+    case HashUtils.get(hash, first) do
+      nil -> HashUtils.add( hash, first, 
+              HashUtils.addf( [], rest, val ) )
+      some ->
+        case HashUtils.is_hash?(some) do
+          false -> raise "HashUtils.addf : can't apply addf to not hash #{inspect some}. Path #{inspect path}, hash #{inspect hash}, val #{inspect val}"
+          true -> HashUtils.add( hash, first, HashUtils.addf( some, rest, val ) )
+        end
+    end
+  end
 
 
   # priv funcs for modify_all

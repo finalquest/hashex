@@ -210,4 +210,18 @@ defmodule HashexTest do
   test "to_list 2" do
     assert HashUtils.to_list( [a: 1] ) == [{:a, 1}]
   end
+
+  test "addf 1" do
+    assert HashUtils.addf(%Some{a: 1}, [:a], "qweqwe") == %Some{a: "qweqwe", b: %{c: [1,2,3]}}
+  end
+
+  test "addf 2" do
+    assert HashUtils.addf(%Some{b: %{c: %{e: 1}}}, [:b, :e, :c, :d], "qweqwe") == %Some{b: %{c: %{e: 1}, e: %{c: %{d: "qweqwe"}}}}
+  end
+
+  test "addf 3" do
+    assert HashUtils.addf(%Some{b: []}, [:b, :c, :d], "qweqwe") == %Some{a: 1, b: [c: [d: "qweqwe"]]}
+  end
+
+
 end
