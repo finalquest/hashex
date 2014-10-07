@@ -53,6 +53,7 @@ defprotocol HashUtils do
   def filter_v( hash, func )
 
   def to_list( hash )
+  def to_map( hash )
   def is_hash?( hash )
 
 end
@@ -70,6 +71,10 @@ defimpl HashUtils, for: Map do
   def is_hash? _ do
     true
   end
+  def to_map some do
+    Map.delete(some, :__struct__)
+  end
+  
 
   def get( hash, [key | []] ) do
     Map.get( hash, key )
@@ -301,6 +306,14 @@ defimpl HashUtils, for: Map do
 end
 
 defimpl HashUtils, for: List do
+
+  def to_map lst do
+    Enum.reduce(lst, %{}, 
+      fn({key,value}, res) ->
+        Map.put(res, key, value)
+      end )
+  end
+  
 
   def is_hash?(hash) do
     is_keylist(hash)

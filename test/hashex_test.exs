@@ -223,5 +223,17 @@ defmodule HashexTest do
     assert HashUtils.addf(%Some{b: []}, [:b, :c, :d], "qweqwe") == %Some{a: 1, b: [c: [d: "qweqwe"]]}
   end
 
+  test "to_map 1" do
+    assert HashUtils.to_map([{"qwe",1}, {1,2}]) == %{"qwe" => 1, 1 => 2}
+  end
+
+  test "to_map 2" do
+    assert HashUtils.to_map([a: 1, b: "qweqwe"]) == %{a: 1, b: "qweqwe"}
+  end
+
+  test "to_map 3" do
+    assert HashUtils.to_map(%{a: 1, b: "qweqwe"}) == %{a: 1, b: "qweqwe"}
+  end
+
 
 end
