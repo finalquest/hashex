@@ -105,6 +105,9 @@ defimpl HashUtils, for: Map do
   
 
   # modify all fields of hash, except :__struct__
+  def modify_all(hash, key, func) when (is_atom(key) or is_number(key) or is_binary(key)) do
+    HashUtils.modify_all(hash, [key], func)
+  end
   def modify_all( hash, [], func ) do
     Enum.map( Map.to_list(hash), fn({k,v}) ->
       case k do
@@ -347,6 +350,9 @@ defimpl HashUtils, for: List do
   end
 
   # modify all fields of hash if hash is_keylist, or just do Enum.map for this list
+  def modify_all(hash, key, func) when (is_atom(key) or is_number(key) or is_binary(key)) do
+    HashUtils.modify_all(hash, [key], func)
+  end
   def modify_all( lst, [], func ) do
     case is_keylist( lst ) do
       true -> Enum.map( lst, fn({k,v}) -> {k, ExTask.run( fn() -> func.(v) end )} end ) 
