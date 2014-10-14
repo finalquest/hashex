@@ -19,6 +19,7 @@ defmodule Hashex do
 end
 
 defprotocol HashUtils do
+  @fallback_to_any true
 
   def get( hash, lst )
   def set( hash, lst, val )
@@ -54,14 +55,39 @@ defprotocol HashUtils do
 
   def to_list( hash )
   def to_map( hash )
+  def struct_degradation( hash )
   def is_hash?( hash )
 
 end
 
+defimpl HashUtils, for: Any do
+
+  def struct_degradation(hash) when is_map(hash) do
+    Map.delete(hash, :__struct__)
+      |> HashUtils.modify_all(&HashUtils.struct_degradation/1)
+  end
+  def struct_degradation(hash) when is_list(hash) do
+    case HashUtils.is_hash?(hash) do
+      true -> HashUtils.modify_all(hash, &HashUtils.struct_degradation/1)
+      false -> Enum.map(hash, &HashUtils.struct_degradation/1)
+    end
+  end
+  def struct_degradation(hash) when is_tuple(hash) do
+    Tuple.to_list(hash)
+      |> HashUtils.struct_degradation
+          |> List.to_tuple
+  end
+  def struct_degradation(hash) do
+    hash
+  end
+end
 
 defimpl HashUtils, for: Atom do
   def get( nil, _ ) do
     nil
+  end
+  def struct_degradation(hash) do
+    hash
   end
 end
 
@@ -75,6 +101,10 @@ defimpl HashUtils, for: Map do
     Map.delete(some, :__struct__)
   end
   
+  def struct_degradation(hash) do
+    Map.delete(hash, :__struct__)
+      |> HashUtils.modify_all(&HashUtils.struct_degradation/1)
+  end
 
   def get( hash, [key | []] ) do
     Map.get( hash, key )
@@ -316,7 +346,12 @@ defimpl HashUtils, for: List do
         Map.put(res, key, value)
       end )
   end
-  
+  def struct_degradation(hash) do
+    case HashUtils.is_hash?(hash) do
+      true -> HashUtils.modify_all(hash, &HashUtils.struct_degradation/1)
+      false -> Enum.map(hash, &HashUtils.struct_degradation/1)
+    end
+  end
 
   def is_hash?(hash) do
     is_keylist(hash)

@@ -6,6 +6,10 @@ defmodule HashexTest do
   	defstruct a: 1, b: %{c: [1,2,3]}
   end
 
+  defmodule NotDerived do
+    defstruct a: %Some{}, b: {%Some{}, [a: %{1 => 2}]}
+  end
+
   test "struct_get" do
     assert HashUtils.get( %Some{}, [:b, :c] ) == [1,2,3]
   end
@@ -235,5 +239,8 @@ defmodule HashexTest do
     assert HashUtils.to_map(%{a: 1, b: "qweqwe"}) == %{a: 1, b: "qweqwe"}
   end
 
+  test "struct degradation" do
+    assert (%NotDerived{} |> HashUtils.struct_degradation) ==  %{a: %{a: 1, b: %{c: [1,2,3]}}, b: {%{a: 1, b: %{c: [1,2,3]}}, [a: %{1 => 2}]}}
+  end
 
 end
