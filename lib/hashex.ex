@@ -80,6 +80,10 @@ defimpl HashUtils, for: Any do
   def struct_degradation(hash) do
     hash
   end
+  def is_hash?(_) do
+    false
+  end
+
 end
 
 defimpl HashUtils, for: Atom do
@@ -88,6 +92,9 @@ defimpl HashUtils, for: Atom do
   end
   def struct_degradation(hash) do
     hash
+  end
+  def is_hash?(_) do
+    false
   end
 end
 
