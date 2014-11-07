@@ -390,7 +390,10 @@ defimpl HashUtils, for: List do
     end
   end
   def maybe_get(hash, key) do
-    HashUtils.get(hash, key)
+    case HashUtils.is_hash?(hash) do
+      true -> HashUtils.get(hash, key)
+      false -> :not_hash
+    end
   end
 
 
