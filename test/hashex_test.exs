@@ -245,6 +245,9 @@ defmodule HashexTest do
 
   test "maybe get 1" do
     assert HashUtils.maybe_get(123, :qwe) == :not_hash
+    assert HashUtils.maybe_get({}, :qwe) == :not_hash
+    assert HashUtils.maybe_get("qwe", :qwe) == :not_hash
+    assert HashUtils.maybe_get([{},{:qwe, 1}], :qwe) == :not_hash
     assert HashUtils.maybe_get(123, [:qwe, 123]) == :not_hash
     assert HashUtils.maybe_get(%{qwe: :qweqwe}, [:qwe, :qweqwe]) == :not_hash
     assert HashUtils.maybe_get(%{qwe: [{:qweqwe, 1}, {}]}, [:qwe, :qweqwe]) == :not_hash
@@ -253,6 +256,7 @@ defmodule HashexTest do
   test "maybe get 2" do
     assert HashUtils.maybe_get(%{}, :qwe) == nil
     assert HashUtils.maybe_get([], [:qwe, 123]) == nil
+    assert HashUtils.maybe_get([{:qwe, 123}], [:qwe]) == 123
     assert HashUtils.maybe_get(%{qwe: :qweqwe}, :key) == nil
     assert HashUtils.maybe_get(%{qwe: [{:qweqwe, 1}, {}]}, [:qwe]) == [{:qweqwe, 1}, {}]
   end
