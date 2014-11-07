@@ -243,4 +243,25 @@ defmodule HashexTest do
     assert (%NotDerived{} |> HashUtils.struct_degradation) ==  %{a: %{a: 1, b: %{c: [1,2,3]}}, b: {%{a: 1, b: %{c: [1,2,3]}}, [a: %{1 => 2}]}}
   end
 
+  test "maybe get 1" do
+    assert HashUtils.maybe_get(123, :qwe) == :not_hash
+    assert HashUtils.maybe_get(123, [:qwe, 123]) == :not_hash
+    assert HashUtils.maybe_get(%{qwe: :qweqwe}, [:qwe, :qweqwe]) == :not_hash
+    assert HashUtils.maybe_get(%{qwe: [{:qweqwe, 1}, {}]}, [:qwe, :qweqwe]) == :not_hash
+  end
+
+  test "maybe get 2" do
+    assert HashUtils.maybe_get(%{}, :qwe) == nil
+    assert HashUtils.maybe_get([], [:qwe, 123]) == nil
+    assert HashUtils.maybe_get(%{qwe: :qweqwe}, :key) == nil
+    assert HashUtils.maybe_get(%{qwe: [{:qweqwe, 1}, {}]}, [:qwe]) == [{:qweqwe, 1}, {}]
+  end
+
+  test "maybe get 3" do
+    assert HashUtils.maybe_get(%{123 => [qwe: 321, qweqwe: 1]}, [123, :qwe]) == 321
+    assert HashUtils.maybe_get(%Some{a: %{b: [c: 1]}}, :a) == %{b: [c: 1]}
+    assert HashUtils.maybe_get(%Some{a: %{b: [c: 1]}}, [:a, :b, :c]) == 1
+    assert HashUtils.maybe_get(%Some{a: %{b: [c: 1]}}, [:a, :b, :c, :d]) == :not_hash
+  end
+
 end

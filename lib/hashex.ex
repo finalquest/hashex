@@ -21,6 +21,8 @@ end
 defprotocol HashUtils do
   @fallback_to_any true
 
+  def maybe_get( hash, lst )
+
   def get( hash, lst )
   def set( hash, lst, val )
   def set( hash, keylist )
@@ -62,6 +64,10 @@ end
 
 defimpl HashUtils, for: Any do
 
+  def maybe_get(_, _) do
+    :not_hash
+  end
+
   def struct_degradation(hash) when is_map(hash) do
     Map.delete(hash, :__struct__)
       |> HashUtils.modify_all(&HashUtils.struct_degradation/1)
@@ -83,10 +89,20 @@ defimpl HashUtils, for: Any do
   def is_hash?(_) do
     false
   end
+  
 
 end
 
 defimpl HashUtils, for: Atom do
+  
+  def maybe_get( nil, _ ) do
+    nil
+  end
+  def maybe_get( _ , _ ) do
+    :not_hash
+  end
+  
+
   def get( nil, _ ) do
     nil
   end
@@ -100,6 +116,19 @@ end
 
 
 defimpl HashUtils, for: Map do
+
+  def maybe_get(hash, [key]) do
+    HashUtils.get(hash, key)
+  end
+  def maybe_get(hash, [key|rest]) do
+    HashUtils.get(hash, key)
+      |> HashUtils.maybe_get(rest)
+  end
+  def maybe_get(hash, key) do
+    HashUtils.get(hash, key)
+  end
+  
+  
 
   def is_hash? _ do
     true
@@ -346,6 +375,24 @@ defimpl HashUtils, for: Map do
 end
 
 defimpl HashUtils, for: List do
+
+  def maybe_get(hash, [key]) do
+    case HashUtils.is_hash?(hash) do
+      true -> HashUtils.get(hash, key)
+      false -> :not_hash
+    end
+  end
+  def maybe_get(hash, [key|rest]) do
+    case HashUtils.is_hash?(hash) do
+      true -> HashUtils.get(hash, key)
+                |> HashUtils.maybe_get(rest)
+      false -> :not_hash
+    end
+  end
+  def maybe_get(hash, key) do
+    HashUtils.get(hash, key)
+  end
+
 
   def to_map lst do
     Enum.reduce(lst, %{}, 
