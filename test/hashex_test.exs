@@ -10,6 +10,11 @@ defmodule HashexTest do
     defstruct a: %Some{}, b: {%Some{}, [a: %{1 => 2}]}
   end
 
+  defmodule SomeElse do
+    defstruct a: 1, b: %{c: [1,2,3]}
+  end
+  use Hashex, [SomeElse]
+
   test "struct_get" do
     assert HashUtils.get( %Some{}, [:b, :c] ) == [1,2,3]
   end
@@ -266,6 +271,11 @@ defmodule HashexTest do
     assert HashUtils.maybe_get(%Some{a: %{b: [c: 1]}}, :a) == %{b: [c: 1]}
     assert HashUtils.maybe_get(%Some{a: %{b: [c: 1]}}, [:a, :b, :c]) == 1
     assert HashUtils.maybe_get(%Some{a: %{b: [c: 1]}}, [:a, :b, :c, :d]) == :not_hash
+  end
+
+  test "impl on macro" do
+    assert HashUtils.maybe_get(%SomeElse{}, [:b, :c]) == [1,2,3]
+    assert HashUtils.maybe_get(%SomeElse{}, [:b, :d]) == nil
   end
 
 end
