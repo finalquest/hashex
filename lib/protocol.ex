@@ -52,15 +52,10 @@ defimpl HashUtils, for: [BitString, Float, Function, Integer, PID, Port, Referen
     :not_hash
   end
 
+  # this clause for not derived structs or structs without impl
   def struct_degradation(hash) when is_map(hash) do
     Map.delete(hash, :__struct__)
       |> HashUtils.modify_all(&HashUtils.struct_degradation/1)
-  end
-  def struct_degradation(hash) when is_list(hash) do
-    case HashUtils.is_hash?(hash) do
-      true -> HashUtils.modify_all(hash, &HashUtils.struct_degradation/1)
-      false -> Enum.map(hash, &HashUtils.struct_degradation/1)
-    end
   end
   def struct_degradation(hash) when is_tuple(hash) do
     Tuple.to_list(hash)
