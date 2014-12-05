@@ -1,5 +1,5 @@
 defprotocol HashUtils do
-  @fallback_to_any true
+  #@fallback_to_any true
 
   def maybe_get( hash, lst )
 
