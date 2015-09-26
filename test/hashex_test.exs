@@ -2,18 +2,57 @@ defmodule HashexTest do
   use ExUnit.Case
 
   defmodule Some do
-  	@derive [HashUtils]
+  	# legacy
+    @derive [HashUtils]
   	defstruct a: 1, b: %{c: [1,2,3]}
   end
-
-  defmodule NotDerived do
-    defstruct a: %Some{}, b: {%Some{}, [a: %{1 => 2}]}
-  end
-
   defmodule SomeElse do
     defstruct a: 1, b: %{c: [1,2,3]}
   end
-  use Hashex, [SomeElse]
+  defmodule Nested do
+    defstruct a: 1,
+              b: %SomeElse{a: 
+                [
+                  d: 2, 
+                  e: %{
+                        f: %Some{a: 3}
+                     }
+                ]
+              }
+  end
+  use Hashex, [SomeElse, Nested]
+  defp somekv, do: [a: 1, b: %{c: [1,2,3]}]
+
+  #################
+  ### new tests ###
+  #################
+
+  @not_hashes [ 1, 1.11, [:qwe,1,2], "foo", [{"hello",1},{:world,2}] ]
+
+  test "get" do
+    assert HashUtils.get( %Some{}, [:b, :c] ) == [1,2,3]
+    assert HashUtils.get( %Some{}, :a ) == 1
+    assert HashUtils.get( %Some{}, "shits" ) == nil
+    assert HashUtils.get( %SomeElse{}, [:b, :c] ) == [1,2,3]
+    assert HashUtils.get( %SomeElse{}, :a ) == 1
+    assert HashUtils.get( %SomeElse{}, "shits" ) == nil
+    assert HashUtils.get( somekv, [:b, :c] ) == [1,2,3]
+    assert HashUtils.get( somekv, :a ) == 1
+    assert HashUtils.get( somekv, :shits ) == nil
+    assert HashUtils.get( %Nested{}, [:b, :a, :e, :f, :a] ) == 3
+    assert HashUtils.get( %Nested{}, [:b, :a, :e, :shits, :a] ) == nil
+    assert Enum.all?(@not_hashes, fn(h) -> 1 == (try do HashUtils.get(h, :qwe); catch _ -> 1; rescue _ -> 1 end) end)
+  end
+
+  test "set" do
+    assert HashUtils.set( %Some{b: %{c: [a: %{b: [c: 1]}]}}, [:b, :c, :a, :b, :c], 321) == %Some{b: %{c: [a: %{b: [c: 321]}]}}
+    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}], fn(h) -> 1 == (try do HashUtils.set(h, :qwe, 1); catch _ -> 1; rescue _ -> 1 end) end)
+    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}], fn(h) -> 1 == (try do HashUtils.set(h, [:a, :b], 1); catch _ -> 1; rescue _ -> 1 end) end)
+  end
+
+  ####################
+  ### legacy tests ###
+  ####################
 
   test "struct_get" do
     assert HashUtils.get( %Some{}, [:b, :c] ) == [1,2,3]
@@ -123,6 +162,8 @@ defmodule HashexTest do
 
   test "values 1" do
     assert HashUtils.values( [a: 1, b: [1,2,3]] ) == [1, [1,2,3]]
+    assert HashUtils.values( %Some{a: 1, b: 2} ) == [1,2]
+    assert HashUtils.values( %SomeElse{a: 1, b: 2} ) == [1,2]
   end
 
   test "values 2" do
@@ -242,10 +283,6 @@ defmodule HashexTest do
 
   test "to_map 3" do
     assert HashUtils.to_map(%{a: 1, b: "qweqwe"}) == %{a: 1, b: "qweqwe"}
-  end
-
-  test "struct degradation" do
-    assert (%NotDerived{} |> HashUtils.struct_degradation) ==  %{a: %{a: 1, b: %{c: [1,2,3]}}, b: {%{a: 1, b: %{c: [1,2,3]}}, [a: %{1 => 2}]}}
   end
 
   test "maybe get 1" do
