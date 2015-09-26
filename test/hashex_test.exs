@@ -46,8 +46,12 @@ defmodule HashexTest do
 
   test "set" do
     assert HashUtils.set( %Some{b: %{c: [a: %{b: [c: 1]}]}}, [:b, :c, :a, :b, :c], 321) == %Some{b: %{c: [a: %{b: [c: 321]}]}}
-    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}], fn(h) -> 1 == (try do HashUtils.set(h, :qwe, 1); catch _ -> 1; rescue _ -> 1 end) end)
-    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}], fn(h) -> 1 == (try do HashUtils.set(h, [:a, :b], 1); catch _ -> 1; rescue _ -> 1 end) end)
+    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}, %{a: 1}], fn(h) -> 1 == (try do HashUtils.set(h, :qwe, 1); catch _ -> 1; rescue _ -> 1 end) end)
+    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}, %{a: 1}], fn(h) -> 1 == (try do HashUtils.set(h, [:a, :b], 1); catch _ -> 1; rescue _ -> 1 end) end)
+    assert HashUtils.set( %Some{}, [a: 666, b: 666]) == %Some{a: 666, b: 666}
+    assert HashUtils.set( %Some{}, %{a: 666, b: 666}) == %Some{a: 666, b: 666}
+    assert HashUtils.set( [c: 1, a: 0, b: 0], [a: 666, b: 666]) |> Enum.sort == [a: 666, b: 666, c: 1] |> Enum.sort
+    assert HashUtils.set( %{c: 1, a: 0, b: 0}, %{a: 666, b: 666}) == %{a: 666, b: 666, c: 1}
   end
 
   ####################
