@@ -54,6 +54,53 @@ defmodule HashexTest do
     assert HashUtils.set( %{c: 1, a: 0, b: 0}, %{a: 666, b: 666}) == %{a: 666, b: 666, c: 1}
   end
 
+  test "add" do
+      assert (HashUtils.add( %Some{a: %{1 => %{"some" => 123}}}, [:a, 1, :some_else], 321 ) == %Some{a: %{1 => %{"some" => 123, :some_else => 321}}})
+      assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}], fn(h) -> 1 == (try do HashUtils.add(h, :qwe, 1); catch _ -> 1; rescue _ -> 1 end) end)
+      assert [%Some{}, %SomeElse{}, %Nested{}] == [%Some{}, %SomeElse{}, %Nested{}] |> Enum.map(&(HashUtils.add(&1, :a, 1)))
+  end
+
+  test "delete" do
+    assert HashUtils.delete( %{a: [b: %{c: 1, d: 1, e: 1}]}, [:a, :b, :e] ) == %{a: [b: %{c: 1, d: 1}]}
+    assert HashUtils.delete( %{a: [b: [c: 1, d: 1, e: 1]]}, [:a, :b, :e] ) == %{a: [b: [c: 1, d: 1]]}
+    assert (HashUtils.delete( %{a: 1, b: 2}, :b ) == %{a: 1}) and ( HashUtils.delete( [a: 1, b: 2], :b ) == [a: 1] )
+    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}], fn(h) -> 1 == (try do HashUtils.delete(h, :a); catch _ -> 1; rescue _ -> 1 end) end)
+  end
+
+  test "modify" do
+    assert HashUtils.modify( %Some{}, [:b, :c] , fn(_) ->  321 end ) == %Some{a: 1, b: %{c: 321}}
+    assert HashUtils.modify( %Some{}, [:b, :c] , fn(res) -> Enum.map(res, &(&1*&1)) end ) == %Some{a: 1, b: %{c: [1,4,9]}}
+    assert HashUtils.modify( %Some{b: %{c: [a: %{b: [c: [1,2,3]]}]}}, [:b, :c, :a, :b, :c], fn(res) -> Enum.map(res, &(&1*&1)) end ) == %Some{b: %{c: [a: %{b: [c: [1,4,9]]}]}}
+    assert Enum.all?(@not_hashes ++ [%Some{}, %SomeElse{}, %Nested{}, %{a: 1}], fn(h) -> 1 == (try do HashUtils.modify(h, :qwe, &(inspect(&1)) ); catch _ -> 1; rescue _ -> 1 end) end)
+  end
+
+  test "modify_all" do
+    assert HashUtils.modify_all( %Some{}, [], fn(_) -> :some_else end ) == %Some{a: :some_else, b: :some_else}
+    assert HashUtils.modify_all( %{a: 1, b: %{c: 2, d: 3}}, [:b], fn(el) -> el*el end ) == %{a: 1, b: %{c: 4, d: 9}}
+    assert HashUtils.modify_all( %Some{a: [a: %{a: [a: 1, b: 2, c: 3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [a: 1, b: 4, c: 9]}]}
+    assert HashUtils.modify_all( %Some{a: [a: %{a: [1,2,3]}]}, [:a, :a, :a], fn(el) -> el*el  end ) == %Some{a: [a: %{a: [1,4,9]}]}
+    assert HashUtils.modify_all( %{a: 1, b: 2}, &(&1+&1)) == %{a: 2, b: 4} 
+    assert HashUtils.modify_all( %Some{a: 1, b: 2}, &(&1+&1) ) == %Some{a: 2, b: 4}
+    assert HashUtils.modify_all( [a: 1, b: 2], &(&1*&1)) == [a: 1, b: 4]
+    assert @not_hashes |> Enum.filter(&(not is_list(&1))) |> Enum.all?(fn(h) -> 1 == (try do HashUtils.modify_all(h, &(inspect(&1)) ); catch _ -> 1; rescue _ -> 1 end) end)
+  end
+
+  test "keys" do
+    assert HashUtils.keys( [a: 1, b: [1,2,3]] ) == [:a, :b]
+    assert HashUtils.keys( %Some{a: %{1 => %{"some" => 123}}}, [:a, 1] ) == ["some"]
+    assert HashUtils.keys( %Some{a: %{1 => %{"some" => [a: 1, b: 2, c: %{1 => [a: 1, b: 2]}]}}}, [:a, 1, "some", :c, 1] ) == [:a, :b]
+    assert HashUtils.keys( somekv ) == [:a, :b]
+  end
+
+  test "values" do
+    assert HashUtils.values( [a: 1, b: [1,2,3]] ) == [1, [1,2,3]]
+    assert HashUtils.values( %Some{a: 1, b: 2} ) == [1,2]
+    assert HashUtils.values( %SomeElse{a: 1, b: 3} ) == [1,3]
+    assert HashUtils.values( %Some{a: %{1 => %{"some" => 123}}}, [:a, 1] ) == [123]
+    assert HashUtils.values( %Some{a: %{1 => %{"some" => [a: 1, b: 2, c: %{1 => [a: 1, b: 2]}]}}}, [:a, 1, "some", :c, 1] ) == [1, 2]
+    assert Enum.all?(@not_hashes, fn(h) -> 1 == (try do HashUtils.values(h); catch _ -> 1; rescue _ -> 1 end) end)
+  end
+
   ####################
   ### legacy tests ###
   ####################
@@ -167,7 +214,7 @@ defmodule HashexTest do
   test "values 1" do
     assert HashUtils.values( [a: 1, b: [1,2,3]] ) == [1, [1,2,3]]
     assert HashUtils.values( %Some{a: 1, b: 2} ) == [1,2]
-    assert HashUtils.values( %SomeElse{a: 1, b: 2} ) == [1,2]
+    assert HashUtils.values( %SomeElse{a: 1, b: 3} ) == [1,3]
   end
 
   test "values 2" do

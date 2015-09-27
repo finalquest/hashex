@@ -20,6 +20,10 @@ defprotocol HashUtils do
   def values( hash, lst )
   def values( hash )
 
+  #
+  # maybe make it funcs priv
+  #
+
   def to_list( hash )
   def to_map( hash )
   def is_hash?( hash )
@@ -158,7 +162,12 @@ defimpl HashUtils, for: List do
   def modify_all( hash, func ), do: HashUtils.modify_all( hash, [], func ) # special case for not-nested hashmap
 
   @spec delete(h, kgen) :: h
-  def delete( hash, [key|[]] ), do: Dict.delete( hash, key )
+  def delete( hash, [key|[]] ) do
+    case is_hash?(hash) do
+      true -> Dict.delete( hash, key )
+      false -> (raise "data is not hash #{inspect hash}")
+    end
+  end
   def delete( hash, [key|rest] ), do: Dict.update!( hash, key, fn(_) -> HashUtils.delete(Dict.get( hash, key ) , rest) end )
   def delete( hash, key ), do: HashUtils.delete( hash, [key] ) # special case for not-nested hashmap
 
@@ -170,7 +179,12 @@ defimpl HashUtils, for: List do
 
   # it's like set/3 function, but can create new fields if it is need
   @spec add(h, kgen, v) :: h
-  def add( hash, [new_key|[]], new_val ), do: Dict.put( hash, new_key, new_val )
+  def add( hash, [new_key|[]], new_val ) do 
+    case is_hash?(hash) do
+      true -> Dict.put( hash, new_key, new_val )
+      false -> (raise "not hash struct #{inspect hash}")
+    end
+  end
   def add( hash, [key | rest], new_val ), do: Dict.update!( hash, key, fn(_) -> HashUtils.add(Dict.get( hash, key ) , rest, new_val) end )
   def add( hash, new_key, new_val ), do: HashUtils.add( hash, [new_key], new_val ) # special case for not-nested hashmap
 
